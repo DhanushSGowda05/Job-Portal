@@ -17,7 +17,15 @@ const app=express()
 await connectDB()
 await connectCloudinary()
 
-app.use(cors())
+import cors from "cors"
+
+app.use(cors({
+  origin: [
+    "https://job-portal-two-alpha.vercel.app"
+  ],
+  credentials: true
+}))
+
 app.use(express.json())
 app.use(clerkMiddleware())
 
