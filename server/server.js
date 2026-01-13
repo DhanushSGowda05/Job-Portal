@@ -17,8 +17,6 @@ const app=express()
 await connectDB()
 await connectCloudinary()
 
-import cors from "cors"
-
 app.use(cors({
   origin: [
     "https://job-portal-two-alpha.vercel.app"
