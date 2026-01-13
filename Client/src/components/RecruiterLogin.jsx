@@ -1,142 +1,138 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useClerk } from "@clerk/clerk-react";
-import { assets } from "../assets/assets";
-import { AppContext } from "../context/AppContext.jsx";
+
+import { useState,useEffect } from 'react'
+import { assets } from '../assets/assets';
+import { useContext } from 'react';
+import { AppContext } from '../context/AppContext.jsx';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const RecruiterLogin = () => {
-    const [companyName, setCompanyName] = useState("");
-    const [companyLogo, setCompanyLogo] = useState(null);
-    const [isLogoStage, setIsLogoStage] = useState(false);
 
-    const { openSignUp } = useClerk();
-    const { setshowRecruiterLogin } = useContext(AppContext);
+    const navigate = useNavigate();
 
-    // Handle submit for first stage (text)
-    const handleNext = (e) => {
+    const [state, setState] = useState('Login');
+    const [name, setName] = useState('');
+    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
+
+    const [image, setImage] = useState(false);
+    const [isTextDataSubmitted, setisTextDataSubmitted] = useState(false);
+
+    const {setshowRecruiterLogin,backendUrl,setcompanyToken,setcompanyData }= useContext(AppContext);
+    
+    const onSubmitHandler = async(e) => {
         e.preventDefault();
-        if (!companyName) return alert("Please enter your company name");
-        setIsLogoStage(true);
-    };
+        if (state === 'Sign Up' && !isTextDataSubmitted) {
+            return setisTextDataSubmitted(true);
+            
+    }
+    try {
+        if (state === 'Login') {
+            const {data} = await axios.post(backendUrl + '/api/company/login',{email,password})
 
-    // Handle final submit (logo + open Clerk signup)
-    const handleSignup = async (e) => {
-        e.preventDefault();
+            if (data.success) {
+                
+                setcompanyToken(data.token);
+                setcompanyData(data.company);
+                localStorage.setItem("companyToken",data.token);
+                setshowRecruiterLogin(false);
+                navigate('/dashboard');
+            }else{
+                toast.error(data.message)
+            }
+        }else{
+            const formData=new FormData();
+            formData.append("name",name);
+            formData.append("email",email);
+            formData.append("password",password);
+            formData.append("image",image);
 
-        if (!companyLogo) return alert("Please upload your company logo");
+            const {data}= await axios.post(backendUrl + '/api/company/register',formData)
 
-        // Convert image to Base64
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64Logo = reader.result;
+            if (data.success) {
+        
+                setcompanyToken(data.token);
+                setcompanyData(data.company);
+                localStorage.setItem("companyToken",data.token);
+                setshowRecruiterLogin(false);
+                navigate('/dashboard');
+            }else{
+                toast.error(data.message)
+            }
+        }
+    } catch (error) {
+        toast.error(error.message || "An error occurred");
+    }
 
-            // Save recruiter metadata for PostSignUpHandler
-            localStorage.setItem("signupRole", "recruiter");
-            localStorage.setItem("companyName", companyName);
-            localStorage.setItem("companyLogo", base64Logo);
+}
 
-            // Close popup
-            setshowRecruiterLogin(false);
-
-            // Open Clerk signup modal
-            openSignUp();
-        };
-        reader.readAsDataURL(companyLogo);
-    };
-
-    // Prevent background scroll
     useEffect(() => {
-        document.body.style.overflow = "hidden";
+        document.body.style.overflow = 'hidden';
         return () => {
-            document.body.style.overflow = "unset";
+            document.body.style.overflow = 'unset';
         };
     }, []);
 
     return (
-        <div className="absolute top-0 left-0 right-0 bottom-0 z-10 backdrop-blur-sm bg-black/30 flex justify-center items-center">
-            <form
-                onSubmit={isLogoStage ? handleSignup : handleNext}
-                className="relative bg-white p-10 rounded-xl text-slate-500 w-[22rem]"
-            >
-                <h1 className="text-center text-2xl text-neutral-700 font-medium">
-                    Recruiter Sign Up
-                </h1>
-                <p className="text-sm text-center mt-1">
-                    Create your recruiter account to post jobs
-                </p>
 
-                {/* Stage 1: Company Name */}
-                {!isLogoStage && (
-                    <>
-                        <div className="border px-4 py-2 flex items-center gap-2 rounded-full mt-8">
-                            <img src={assets.person_icon} alt="" />
-                            <input
-                                className="outline-none text-sm w-full"
-                                onChange={(e) => setCompanyName(e.target.value)}
-                                value={companyName}
-                                type="text"
-                                placeholder="Company name"
-                                required
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            className="mt-6 bg-blue-600 w-full text-white py-2 rounded-full"
-                        >
-                            Next
-                        </button>
-                    </>
-                )}
 
-                {/* Stage 2: Logo Upload */}
-                {isLogoStage && (
+        <div className='absolute top-0 left-0 right-0 bottom-0 z-10 backdrop-blur-sm bg-black/30 flex justify-center items-center'>
+            <form onSubmit={onSubmitHandler} className='relative bg-white p-10 rounded-xl text-slate-500'>
+                <h1 className='text-center text-2xl text-neutral-700 font-medium'>Recruiter {state}</h1>
+                <p className='text-sm'>Welcome back!Please sign in to continue</p>
+                {state === 'Sign Up' && isTextDataSubmitted ?
                     <>
-                        <div className="flex flex-col items-center my-8">
-                            <label htmlFor="logo" className="cursor-pointer">
-                                <img
-                                    className="w-20 h-20 rounded-full object-cover border"
-                                    src={
-                                        companyLogo
-                                            ? URL.createObjectURL(companyLogo)
-                                            : assets.upload_area
-                                    }
-                                    alt=""
-                                />
-                                <input
-                                    onChange={(e) => setCompanyLogo(e.target.files[0])}
-                                    type="file"
-                                    id="logo"
-                                    hidden
-                                />
+                        <div className='flex items-center gap-4 my-10'>
+                            <label htmlFor="image">
+                                <img className='w-16 rounded-full' src={image ? URL.createObjectURL(image) :assets.upload_area} alt="" />
+                                <input onChange={e=>setImage(e.target.files[0])} type="file" id='image' hidden />
                             </label>
-                            <p className="text-sm mt-2 text-center text-gray-600">
-                                Upload your company logo
-                            </p>
+                            <p>Upload Comapny <br/> logo</p>
                         </div>
-                        <button
-                            type="submit"
-                            className="mt-2 bg-blue-600 w-full text-white py-2 rounded-full"
-                        >
-                            Continue to Sign Up
-                        </button>
+                    </> :
+                    <>
+
+                        {state !== 'Login' &&
+                            (<div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5'>
+                                <img src={assets.person_icon} alt="" />
+                                <input className='outline-none text-sm' onChange={e => setName(e.target.value)} value={name} type="text" placeholder='Company Name' required />
+                            </div>)
+                        }
+
+
+                        <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5'>
+                            <img src={assets.email_icon} alt="" />
+                            <input className='outline-none text-sm' onChange={e => setEmail(e.target.value)} value={email} type="email" placeholder='Email' required />
+                        </div>
+
+                        <div className='border px-4 py-2 flex items-center gap-2 rounded-full mt-5'>
+                            <img src={assets.lock_icon} alt="" />
+                            <input className='outline-none text-sm' onChange={e => setPassword(e.target.value)} value={password} type="password" placeholder='Password' required />
+                        </div>
+
+
                     </>
-                )}
+                }
 
-                <img
-                    onClick={() => setshowRecruiterLogin(false)}
-                    className="absolute top-5 right-5 cursor-pointer"
-                    src={assets.cross_icon}
-                    alt=""
-                />
-                <p className='mt-4 text-center text-sm'>
-                    Already have an account?{" "}
-                    <span onClick={() => openSignUp()} className='text-blue-600 cursor-pointer'>
-                        Sign In
-                    </span>
-                </p>
+                {state === 'Login' &&
+                <p className='text-sm text-blue-600 my-4 cursor-pointer'>
+                    Forget Password?
+                </p>}
+                
 
+                <button type='submit' className='bg-blue-500 w-full text-white py-2 rounded-full mt-4'>
+                    {state === 'Login' ? 'Login' : isTextDataSubmitted ? 'Sign Up' : 'Next'}
+                </button>
+
+                {state === 'Login' ?
+                    <p className='mt-5 text-center'>Dont't have an account? <span className='text-blue-500 cursor-pointer' onClick={() => setState("Sign Up")}>Sign Up</span></p> :
+                    <p className='mt-5 text-center'>Already have an account? <span className='text-blue-500 cursor-pointer' onClick={() => setState("Login")}>Login</span></p>}
+
+                <img onClick={e => setshowRecruiterLogin(false)} className='absolute top-5 right-5 cursor-pointer' src={assets.cross_icon} alt="" />
             </form>
         </div>
-    );
-};
+    )
+}
 
-export default RecruiterLogin;
+export default RecruiterLogin

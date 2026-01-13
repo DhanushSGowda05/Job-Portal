@@ -10,7 +10,7 @@ const Navbar = () => {
     const { openSignUp } = useClerk();
     const { user } = useUser();
     const navigate = useNavigate();
-    const { showRecruiterLogin, setshowRecruiterLogin } = useContext(AppContext);
+    const { setshowRecruiterLogin}= useContext(AppContext);
 
     const handleSeekerSignup = () => {
         localStorage.setItem("signupRole", "seeker");
@@ -22,7 +22,12 @@ const Navbar = () => {
                 <img onClick={() => navigate('/')} className='cursor-pointer' src={assets.logo} alt="" />
                 {
                     user ? <div className='flex items-center gap-3'>
-                        <Link to={'/applications'}>Applied Jobs</Link>
+                        <div className='bg-gradient-to-r from-yellow-500 to-pink-950 text-white px-6 sm:px-9 py-2 rounded-full'>
+                            <Link to={'/resume-analyzer'}>Resume Analyser</Link>
+                        </div>
+                        <div className='bg-blue-600 text-white px-6 sm:px-9 py-2 rounded-full'>
+                            <Link to={'/applications'}>Applied Jobs</Link>
+                        </div>
                         <p> | </p>
                         <p className='max-sm:hidden'>
                             Hi, {user?.firstName} {user?.lastName}
