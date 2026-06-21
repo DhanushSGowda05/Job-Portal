@@ -1,0 +1,28 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: job-portal-server
+    ports:
+      - "5001:5000"
+    env_file:
+      - ./server/.env
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./Client
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL}
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY}
+    container_name: job-portal-client
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+    restart: unless-stopped
